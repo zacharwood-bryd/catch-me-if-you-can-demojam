@@ -1,6 +1,6 @@
 # Catch Me If You Can
 
-A five-minute live demo for Penhallow Bank, a fictional UK retail bank. Zac plays Frank, calling to take money from Mary Clark's savings. Carl, an Agentforce Voice agent, checks the amount against her payment baseline, refuses it, locks the saver, and alerts the fraud channel in Slack. Zac then hangs up as Frank and flips to the fraud investigator.
+A five-minute live demo for Penhallow Bank, a fictional UK retail bank. Zac plays Frank, calling to take money from Mary Clark's savings. Carl, an Agentforce Voice agent, checks the amount against her payment baseline, refuses it, locks the saver, and opens a Salesforce channel for the case. Zac then hangs up as Frank and flips to the fraud investigator.
 
 Carl's wording will vary. The records and flows below are what is in the org.
 
@@ -17,7 +17,7 @@ Slack channel: **#incident-fraud-potential** (`C0CM6NJQG8J`)
 | Frank | Zac, on the phone | Calls as Mary. Verifies, then asks to take £45,000 out of the saver for his grandad's birthday. Hangs up frustrated. |
 | Carl | Agentforce Voice agent, version 7 | Introduces himself, verifies one fact at a time, asks how he can help, checks the remit, refuses, locks the saver, and notifies Slack. |
 | Mary Clark | Person Account `C-100001` | The customer. She is not on the call. |
-| Fraud investigator | Zac, in Slack | Opens #incident-fraud-potential and starts from Carl's alert. |
+| Fraud investigator | Zac, in Slack | Opens the Salesforce channel on the case. The saver is already locked. |
 
 Carl runs as `einstein.service.agent@penhallowinsurance.com`, locale `en_GB`.
 
@@ -69,9 +69,9 @@ Give one answer, then wait. Carl asks one question at a time.
 9. He asks how much. Say **£45,000**.
 10. He says: "I'm sorry, this falls outside of the level of payment I can process."
 11. He locks the saver and opens a case, subject **Potential fraud on Mary Clark's saver**.
-12. He creates an incident Slack channel named from the case number and posts an alert to #incident-fraud-potential.
+12. He opens a Salesforce channel for the case. The channel is linked to the case record. This version does not post into #incident-fraud-potential.
 13. Hang up with: "Things were easier in the 60s, but now with Agentforce and Data 360 it's getting harder and harder to be a fraudster."
-14. Switch to the fraud investigator. The alert in #incident-fraud-potential is the start of the work. The saver is already locked. There is no button to press.
+14. Switch to the fraud investigator. Open the Salesforce channel on the case. The saver is already locked. There is no button to press.
 
 Stay calm if Frank pushes. Carl does not send the money, and a birthday does not change the remit.
 
@@ -84,11 +84,13 @@ Stay calm if Frank pushes. Carl does not send the money, and a birthday does not
 | Phone lookup | `Look_Up_Customer_By_Phone` | No match for 07700 900666 is a normal result. |
 | Remit | `Read_Payment_Baseline` version 2 | Takes the account number and the amount. Returns `withinRemit` and the refusal sentence. |
 | Case and lock | `Handle_Out_Of_Remit_Payment` | Sets `Locked__c` and `Payment_Hold__c` on the saver, opens the case, and writes a **Penhallow safe message** Task on Mary. |
-| Slack | `Notify_Fraud_In_Slack` version 5 | Creates a public channel `incident-{case number}` and posts the case summary there. Posts a short alert to `C0CM6NJQG8J`. |
+| Slack | `Notify_Fraud_In_Slack` version 6 | Calls `Create_Record_Channel`. That flow uses the native actions Create a Salesforce channel and Add users to a Salesforce channel. No Slack app id and no workspace id. |
 
 There is no action that sends a payment.
 
-The Slack flow uses the Salesforce for Slack app `A03269G3DNE` and the connected Slack org `E0B7L1DCXMZ`. A rehearsal on 26 November 2026 did not post. Every app id, including that one and a made-up id, returned: "The Slack App no longer has access to this Slack action." The workspace connection is on. Flow's Slack actions are not authorized to use it yet. If the alert is missing on the day, open #incident-fraud-potential and narrate the case that Carl already created. The lock does not depend on Slack.
+The Slack connection is the native one for workspace `E0B7L1DCXMZ`. The flow does not pass a Slack app id. A rehearsal on 26 November 2026 ran version 6 against case `00001070` and returned Salesforce channel `C0CM2HG1DSR`. Running it again on that case returns the same channel. The send-message action is not in the catalog Flow will save against, so this version does not post the summary into the case channel or into #incident-fraud-potential (`C0CM6NJQG8J`). Open the case channel and narrate from the case Carl already created. The lock does not depend on Slack.
+
+Flow Builder: [Notify Fraud In Slack](https://penhallow.lightning.force.com/builder_platform_interaction/flowBuilder.app?flowId=301gL00002DVwdWQAT)
 
 ## If you need to rehearse again
 
